@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Grid Map</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<style>
+  #map { height: 100vh; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<script>
+var map = L.map('map').setView([35.6812, 139.7671], 10);
+
+// 地図表示
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+let gridSize = 0.009; // 約1km
+let coloredGrids = JSON.parse(localStorage.getItem("grids")) || {};
+
+function drawGrid() {
+  let bounds = map.getBounds();
+  let south = Math.floor(bounds.getSouth() / gridSize) * gridSize;
+  let north = bounds.getNorth();
+  let west = Math.floor(bounds.getWest() / gridSize) * gridSize;
+  let east = bounds.getEast();
+
+  for (let lat = south; lat < north; lat += gridSize) {
+    for (let lng = west; lng < east; lng += gridSize) {
+
+      let id = lat.toFixed(3) + "_" + lng.toFixed(3);
+
+      let polygon = L.rectangle([
+        [lat, lng],
+        [lat + gridSize, lng + gridSize]
+      ], {
+        color: "gray",
+        weight: 1,
+        fillColor: coloredGrids[id] ? "red" : null,
+        fillOpacity: coloredGrids[id] ? 0.5 : 0
+      }).addTo(map);
+
+      polygon.on("click", function() {
+        coloredGrids[id] = true;
+        localStorage.setItem("grids", JSON.stringify(coloredGrids));
+        map.removeLayer(polygon);
+        drawGrid();
+      });
+    }
+  }
+}
+
+map.on("moveend", function() {
+  drawGrid();
+});
+
+drawGrid();
+</script>
+
+</body>
+</html>
