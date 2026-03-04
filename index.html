@@ -40,11 +40,11 @@ function drawGrid() {
         [lat, lng],
         [lat + gridSize, lng + gridSize]
       ], {
-        color: "gray",
-        weight: 1,
-        fillColor: coloredGrids[id] ? "red" : null,
-        fillOpacity: coloredGrids[id] ? 0.5 : 0
-      }).addTo(map);
+  color: "gray",
+  weight: 1,
+  fillColor: coloredGrids[id] ? "red" : null,
+  fillOpacity: coloredGrids[id] ? 0.5 : 0
+}).addTo(map);
 
       polygon.on("click", function() {
         coloredGrids[id] = true;
