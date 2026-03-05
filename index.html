@@ -2,23 +2,19 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Road Tracker</title>
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grid Map</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
 <style>
-
-body{
+html, body {
+height:100%;
 margin:0;
 }
 
-#map{
-height:100vh;
-width:100vw;
+#map {
+height:100%;
 }
-
 </style>
 </head>
 
@@ -30,51 +26,41 @@ width:100vw;
 
 <script>
 
-const gridSize = 0.0045; // 約500m
+const map = L.map('map').setView([35.68,139.76],10);
 
-let coloredGrids = JSON.parse(localStorage.getItem("grids")) || {};
-
-let map = L.map('map').setView([35.681236,139.767125],10);
-
-L.tileLayer(
-'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-{
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
 maxZoom:19
-}
-).addTo(map);
+}).addTo(map);
 
-function gridId(lat,lng){
+let gridSize = 0.005; // 約500m
 
-let x = Math.floor(lat/gridSize);
-let y = Math.floor(lng/gridSize);
+let coloredGrids =
+JSON.parse(localStorage.getItem("grids") || "{}");
 
-return x+"_"+y;
+function drawGrid(){
 
-}
+for(let lat=30; lat<46; lat+=gridSize){
 
-function drawGrid(lat,lng){
+for(let lng=128; lng<146; lng+=gridSize){
 
-let id = gridId(lat,lng);
-
-let baseLat = Math.floor(lat/gridSize)*gridSize;
-let baseLng = Math.floor(lng/gridSize)*gridSize;
+let id = lat.toFixed(3)+"_"+lng.toFixed(3);
 
 let rect = L.rectangle(
 [
-[baseLat,baseLng],
-[baseLat+gridSize,baseLng+gridSize]
+[lat,lng],
+[lat+gridSize,lng+gridSize]
 ],
 {
 color:"gray",
 weight:1,
-fillColor: coloredGrids[id] ? "rgb(0,200,0)" : "transparent",
+fillColor: coloredGrids[id] ? "rgb(0,200,0)" : null,
 fillOpacity: coloredGrids[id] ? 0.5 : 0
 }
 ).addTo(map);
 
 rect.on("click",function(){
 
-coloredGrids[id]=true;
+coloredGrids[id] = true;
 
 localStorage.setItem(
 "grids",
@@ -89,31 +75,11 @@ fillOpacity:0.5
 });
 
 }
-
-map.on("click",function(e){
-
-drawGrid(e.latlng.lat,e.latlng.lng);
-
-});
-
-function watchLocation(){
-
-navigator.geolocation.watchPosition(function(pos){
-
-let lat = pos.coords.latitude;
-let lng = pos.coords.longitude;
-
-drawGrid(lat,lng);
-
-map.setView([lat,lng],14);
-
-},{
-enableHighAccuracy:true
-});
+}
 
 }
 
-watchLocation();
+drawGrid();
 
 </script>
 
