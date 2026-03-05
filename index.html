@@ -2,21 +2,23 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title></title>
+<title>Road Tracker</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
 <style>
-html, body {
-  margin:0;
-  padding:0;
+
+body{
+margin:0;
 }
 
-#map {
-  height:100vh;
-  width:100%;
+#map{
+height:100vh;
+width:100vw;
 }
+
 </style>
 </head>
 
@@ -24,9 +26,15 @@ html, body {
 
 <div id="map"></div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script>
 
-const map = L.map('map').setView([35.681236,139.767125], 12);
+const gridSize = 0.0045; // 約500m
+
+let coloredGrids = JSON.parse(localStorage.getItem("grids")) || {};
+
+let map = L.map('map').setView([35.681236,139.767125],10);
 
 L.tileLayer(
 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -35,119 +43,77 @@ maxZoom:19
 }
 ).addTo(map);
 
+function gridId(lat,lng){
 
-// 500mメッシュ
-const gridSize = 0.005;
+let x = Math.floor(lat/gridSize);
+let y = Math.floor(lng/gridSize);
 
-let coloredGrids =
-JSON.parse(localStorage.getItem("coloredGrids") || "{}");
+return x+"_"+y;
 
-let gridLayers = {};
+}
 
+function drawGrid(lat,lng){
 
-// グリッド描画
-function drawGrid(){
+let id = gridId(lat,lng);
 
-for(let lat=20; lat<46; lat+=gridSize){
+let baseLat = Math.floor(lat/gridSize)*gridSize;
+let baseLng = Math.floor(lng/gridSize)*gridSize;
 
-for(let lng=122; lng<154; lng+=gridSize){
-
-const id =
-lat.toFixed(3) + "_" +
-lng.toFixed(3);
-
-if(gridLayers[id]) continue;
-
-const polygon = L.rectangle([
-[lat,lng],
-[lat+gridSize,lng+gridSize]
-],{
-
+let rect = L.rectangle(
+[
+[baseLat,baseLng],
+[baseLat+gridSize,baseLng+gridSize]
+],
+{
 color:"gray",
 weight:1,
+fillColor: coloredGrids[id] ? "rgb(0,200,0)" : "transparent",
+fillOpacity: coloredGrids[id] ? 0.5 : 0
+}
+).addTo(map);
 
-fillColor:
-coloredGrids[id]
-? "rgb(0,200,0)"
-: null,
+rect.on("click",function(){
 
-fillOpacity:
-coloredGrids[id]
-? 0.5
-: 0
-
-}).addTo(map);
-
-
-polygon.on("click",function(){
-
-coloredGrids[id] = !coloredGrids[id];
+coloredGrids[id]=true;
 
 localStorage.setItem(
-"coloredGrids",
+"grids",
 JSON.stringify(coloredGrids)
 );
 
-polygon.setStyle({
-
-fillOpacity:
-coloredGrids[id] ? 0.5 : 0
-
-});
-
-});
-
-gridLayers[id]=polygon;
-
-}
-
-}
-
-}
-
-drawGrid();
-
-
-// GPSで自動塗り
-navigator.geolocation.watchPosition(function(position){
-
-const lat = position.coords.latitude;
-const lng = position.coords.longitude;
-
-const gridLat =
-Math.floor(lat/gridSize)*gridSize;
-
-const gridLng =
-Math.floor(lng/gridSize)*gridSize;
-
-const id =
-gridLat.toFixed(3) + "_" +
-gridLng.toFixed(3);
-
-
-if(!coloredGrids[id]){
-
-coloredGrids[id] = true;
-
-localStorage.setItem(
-"coloredGrids",
-JSON.stringify(coloredGrids)
-);
-
-if(gridLayers[id]){
-
-gridLayers[id].setStyle({
-
+rect.setStyle({
 fillColor:"rgb(0,200,0)",
 fillOpacity:0.5
+});
 
 });
 
 }
 
-}
+map.on("click",function(e){
+
+drawGrid(e.latlng.lat,e.latlng.lng);
 
 });
+
+function watchLocation(){
+
+navigator.geolocation.watchPosition(function(pos){
+
+let lat = pos.coords.latitude;
+let lng = pos.coords.longitude;
+
+drawGrid(lat,lng);
+
+map.setView([lat,lng],14);
+
+},{
+enableHighAccuracy:true
+});
+
+}
+
+watchLocation();
 
 </script>
 
