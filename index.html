@@ -10,13 +10,18 @@
 
 <style>
 
-#map {
-height: 100vh;
-margin: 0;
+html,body{
+margin:0;
+padding:0;
+height:100%;
 }
 
-body {
-margin: 0;
+#map{
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100%;
 }
 
 #menuButton{
@@ -28,13 +33,14 @@ background:white;
 padding:10px;
 border-radius:6px;
 font-size:20px;
+cursor:pointer;
 }
 
 #menu{
 position:absolute;
 top:0;
-left:-250px;
-width:250px;
+left:-260px;
+width:260px;
 height:100%;
 background:white;
 z-index:2000;
@@ -43,10 +49,20 @@ box-shadow:2px 0 5px rgba(0,0,0,0.3);
 transition:left 0.3s;
 }
 
+#eraseToggle{
+position:absolute;
+top:10px;
+right:10px;
+z-index:2000;
+background:white;
+padding:10px;
+border-radius:6px;
+}
+
 </style>
 
 </head>
-  
+
 <body>
 
 <div id="map"></div>
@@ -54,29 +70,36 @@ transition:left 0.3s;
 <div id="menuButton">☰</div>
 
 <div id="menu">
+
 <h3>メニュー</h3>
 
 <button onclick="moveToGPS()">📍現在地</button>
+<br><br>
+
 <button onclick="resetGrid()">🗑リセット</button>
+
+<br><br>
 
 <div id="counter">訪問メッシュ:0</div>
 
 </div>
-  
-  <button id="eraseToggle">🧽 消しゴム:OFF</button>
+
+<button id="eraseToggle">🧽 消しゴム:OFF</button>
 
 <script>
-  let menuOpen = false;
+
+let menuOpen = false;
 
 document.getElementById("menuButton").onclick = function(){
 
 menuOpen = !menuOpen;
 
 document.getElementById("menu").style.left =
-menuOpen ? "0px" : "-250px";
+menuOpen ? "0px" : "-260px";
 
 };
-  let eraseMode = false;
+
+let eraseMode = false;
 
 document.getElementById("eraseToggle").onclick = function(){
 
@@ -86,44 +109,67 @@ this.innerText =
 eraseMode ? "🧽 消しゴム:ON" : "🧽 消しゴム:OFF";
 
 };
-var map = L.map('map').setView([35.6812, 139.7671], 10);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
+var map = L.map('map').setView([35.6812,139.7671],10);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+attribution:'© OpenStreetMap contributors'
 }).addTo(map);
 
-let gridSize = 0.005; // 約500m
-let coloredGrids = JSON.parse(localStorage.getItem("grids")) || {};
+let gridSize = 0.005;
 
-function drawGrid() {
-  map.eachLayer(function(layer) {
-    if (layer instanceof L.Rectangle) {
-      map.removeLayer(layer);
-    }
-  });
+let coloredGrids =
+JSON.parse(localStorage.getItem("grids")) || {};
 
-  let bounds = map.getBounds();
-  let south = Math.floor(bounds.getSouth() / gridSize) * gridSize;
-  let north = bounds.getNorth();
-  let west = Math.floor(bounds.getWest() / gridSize) * gridSize;
-  let east = bounds.getEast();
+function updateCounter(){
 
-  for (let lat = south; lat < north; lat += gridSize) {
-    for (let lng = west; lng < east; lng += gridSize) {
+let count = Object.keys(coloredGrids).length;
 
-      let id = lat.toFixed(3) + "_" + lng.toFixed(3);
+document.getElementById("counter").innerText =
+"訪問メッシュ:"+count;
 
-      let polygon = L.rectangle([
-        [lat, lng],
-        [lat + gridSize, lng + gridSize]
-      ], {
-        color: "gray",
-        weight: 1,
-        fillColor: coloredGrids[id] ? "rgb(0,200,0)": null,
-        fillOpacity: coloredGrids[id] ? 0.5 : 0
-      }).addTo(map);
+}
 
-      polygon.on("click", function() {
+function drawGrid(){
+
+map.eachLayer(function(layer){
+
+if(layer instanceof L.Rectangle){
+
+map.removeLayer(layer);
+
+}
+
+});
+
+let bounds = map.getBounds();
+
+let south = Math.floor(bounds.getSouth()/gridSize)*gridSize;
+let north = bounds.getNorth();
+
+let west = Math.floor(bounds.getWest()/gridSize)*gridSize;
+let east = bounds.getEast();
+
+for(let lat=south; lat<north; lat+=gridSize){
+
+for(let lng=west; lng<east; lng+=gridSize){
+
+let id = lat.toFixed(3)+"_"+lng.toFixed(3);
+
+let rect = L.rectangle(
+[
+[lat,lng],
+[lat+gridSize,lng+gridSize]
+],
+{
+color:"gray",
+weight:1,
+fillColor: coloredGrids[id] ? "rgb(0,200,0)" : null,
+fillOpacity: coloredGrids[id] ? 0.5 : 0
+}
+).addTo(map);
+
+rect.on("click",function(){
 
 if(eraseMode){
 
@@ -135,17 +181,58 @@ coloredGrids[id] = true;
 
 }
 
-localStorage.setItem("grids", JSON.stringify(coloredGrids));
+localStorage.setItem(
+"grids",
+JSON.stringify(coloredGrids)
+);
+
+updateCounter();
 
 drawGrid();
 
 });
-    }
-  }
+
 }
 
-map.on("moveend", drawGrid);
+}
+
+}
+
+function moveToGPS(){
+
+navigator.geolocation.getCurrentPosition(function(pos){
+
+map.setView(
+[pos.coords.latitude,pos.coords.longitude],
+15
+);
+
+});
+
+}
+
+function resetGrid(){
+
+if(confirm("全部消しますか？")){
+
+coloredGrids = {};
+
+localStorage.removeItem("grids");
+
+updateCounter();
+
 drawGrid();
+
+}
+
+}
+
+map.on("moveend",drawGrid);
+
+drawGrid();
+
+updateCounter();
+
 </script>
 
 </body>
