@@ -46,19 +46,23 @@ transition:left 0.3s;
 </style>
 
 </head>
+  
 <body>
-  <div id="menuButton">☰</div>
+
+<div id="map"></div>
+
+<div id="menuButton">☰</div>
 
 <div id="menu">
 <h3>メニュー</h3>
 
-<button id="eraseToggle">🧽 消しゴム</button><br>
-<button onclick="moveToGPS()">📍 現在地</button><br>
-<button onclick="resetGrid()">🗑 リセット</button>
+<button onclick="moveToGPS()">📍現在地</button>
+<button onclick="resetGrid()">🗑リセット</button>
 
 <div id="counter">訪問メッシュ:0</div>
 
 </div>
+  
   <button id="eraseToggle">🧽 消しゴム:OFF</button>
 
 <script>
