@@ -65,9 +65,14 @@ function drawGrid() {
       }).addTo(map);
 
       polygon.on("click", function() {
-        coloredGrids[id] = true;
-        localStorage.setItem("grids", JSON.stringify(coloredGrids));
-        drawGrid();
+
+if(!paintMode) return;
+
+coloredGrids[id] = true;
+localStorage.setItem("grids", JSON.stringify(coloredGrids));
+drawGrid();
+
+});
       });
     }
   }
