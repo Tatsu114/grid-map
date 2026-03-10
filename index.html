@@ -7,16 +7,6 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <style>
-  #paintToggle {
-position:absolute;
-top:10px;
-right:10px;
-z-index:1000;
-background:white;
-padding:10px;
-border-radius:8px;
-font-size:14px;
-}
   #map { height: 100vh; margin: 0; }
   body { margin: 0; }
 </style>
@@ -24,20 +14,7 @@ font-size:14px;
 <body>
 <div id="map"></div>
 
-  <button id="paintToggle">🖌 塗りモード: ON</button>
-
 <script>
-let paintMode = true;
-
-document.getElementById("paintToggle").onclick = function(){
-
-paintMode = !paintMode;
-
-this.innerText =
-paintMode ? "🖌 塗りモード: ON" : "🖌 塗りモード: OFF";
-
-};
-  
 var map = L.map('map').setView([35.6812, 139.7671], 10);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -76,14 +53,9 @@ function drawGrid() {
       }).addTo(map);
 
       polygon.on("click", function() {
-
-if(!paintMode) return;
-
-coloredGrids[id] = true;
-localStorage.setItem("grids", JSON.stringify(coloredGrids));
-drawGrid();
-
-});
+        coloredGrids[id] = true;
+        localStorage.setItem("grids", JSON.stringify(coloredGrids));
+        drawGrid();
       });
     }
   }
@@ -91,7 +63,6 @@ drawGrid();
 
 map.on("moveend", drawGrid);
 drawGrid();
-  
 </script>
 
 </body>
