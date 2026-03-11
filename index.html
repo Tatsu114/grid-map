@@ -76,10 +76,20 @@ function drawGrid() {
 
       polygon.on("click", function() {
 
-if(!paintMode) return;
+if(paintMode){
 
+// 塗る
 coloredGrids[id] = true;
+
+}else{
+
+// 消す
+delete coloredGrids[id];
+
+}
+
 localStorage.setItem("grids", JSON.stringify(coloredGrids));
+
 drawGrid();
 
 });
