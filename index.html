@@ -4,12 +4,21 @@
 <meta charset="utf-8" />
 <title>Grid Map</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
 <style>
-  #map { height: 100vh; margin: 0; }
-  body { margin: 0; }
-  #paintToggle {
+
+body{
+margin:0;
+}
+
+#map{
+height:100vh;
+}
+
+#paintToggle{
 position:absolute;
 top:10px;
 right:10px;
@@ -17,7 +26,6 @@ z-index:1000;
 background:white;
 padding:10px;
 border-radius:8px;
-font-size:14px;
 }
 
 #saveData{
@@ -39,138 +47,167 @@ background:white;
 padding:10px;
 border-radius:8px;
 }
-  
+
 </style>
 </head>
-<body>
-<div id="map"></div>
-  <button id="paintToggle">🖌 塗りモード: ON</button>
 
+<body>
+
+<div id="map"></div>
+
+<button id="paintToggle">🖌 塗り:ON</button>
 <button id="saveData">💾 保存</button>
 <button id="loadData">📂 読み込み</button>
 <input type="file" id="fileInput" style="display:none">
 
 <script>
+
 let paintMode = true;
 
-document.getElementById("paintToggle").onclick = function(){
+document.getElementById("paintToggle").onclick=function(){
 
-paintMode = !paintMode;
+paintMode=!paintMode;
 
-this.innerText =
-paintMode ? "🖌 塗りモード: ON" : "🖌 塗りモード: OFF";
+this.innerText=
+paintMode ? "🖌 塗り:ON" : "🧽 消しゴム";
 
 };
-  
-var map = L.map('map').setView([35.6812, 139.7671], 10);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
+var map=L.map("map").setView([35.6812,139.7671],10);
 
-let gridSize = 0.005; // 約500m
-let coloredGrids = JSON.parse(localStorage.getItem("grids")) || {};
+L.tileLayer(
+"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+{attribution:"© OpenStreetMap contributors"}
+).addTo(map);
 
-function drawGrid() {
-  map.eachLayer(function(layer) {
-    if (layer instanceof L.Rectangle) {
-      map.removeLayer(layer);
-    }
-  });
+let gridSize=0.005;
 
-  let bounds = map.getBounds();
-  let south = Math.floor(bounds.getSouth() / gridSize) * gridSize;
-  let north = bounds.getNorth();
-  let west = Math.floor(bounds.getWest() / gridSize) * gridSize;
-  let east = bounds.getEast();
+let coloredGrids=
+JSON.parse(localStorage.getItem("grids"))||{};
 
-  for (let lat = south; lat < north; lat += gridSize) {
-    for (let lng = west; lng < east; lng += gridSize) {
+let gridLayers={};
 
-      let id = lat.toFixed(3) + "_" + lng.toFixed(3);
+function drawGrid(){
 
-      let polygon = L.rectangle([
-        [lat, lng],
-        [lat + gridSize, lng + gridSize]
-      ], {
-        color: "gray",
-        weight: 1,
-        fillColor: coloredGrids[id] ? "rgb(0,200,0)": null,
-        fillOpacity: coloredGrids[id] ? 0.5 : 0
-      }).addTo(map);
+let bounds=map.getBounds();
 
-      polygon.on("click", function() {
+let south=Math.floor(bounds.getSouth()/gridSize)*gridSize;
+let north=bounds.getNorth();
+
+let west=Math.floor(bounds.getWest()/gridSize)*gridSize;
+let east=bounds.getEast();
+
+for(let lat=south;lat<north;lat+=gridSize){
+
+for(let lng=west;lng<east;lng+=gridSize){
+
+let id=lat.toFixed(3)+"_"+lng.toFixed(3);
+
+if(gridLayers[id]) continue;
+
+let rect=L.rectangle(
+[
+[lat,lng],
+[lat+gridSize,lng+gridSize]
+],
+{
+color:"gray",
+weight:1,
+fillOpacity:0
+}
+).addTo(map);
+
+if(coloredGrids[id]){
+
+rect.setStyle({
+fillColor:"rgb(0,200,0)",
+fillOpacity:0.5
+});
+
+}
+
+rect.on("click",function(){
 
 if(paintMode){
 
-// 塗る
-coloredGrids[id] = true;
+coloredGrids[id]=true;
+
+rect.setStyle({
+fillColor:"rgb(0,200,0)",
+fillOpacity:0.5
+});
 
 }else{
 
-// 消す
 delete coloredGrids[id];
 
+rect.setStyle({
+fillOpacity:0
+});
+
 }
 
-localStorage.setItem("grids", JSON.stringify(coloredGrids));
-
-drawGrid();
+localStorage.setItem(
+"grids",
+JSON.stringify(coloredGrids)
+);
 
 });
-    }
-  }
+
+gridLayers[id]=rect;
+
 }
 
-map.on("moveend", drawGrid);
+}
+
+}
+
+map.on("moveend",drawGrid);
+
 drawGrid();
 
-// 保存
-document.getElementById("saveData").onclick = function(){
+document.getElementById("saveData").onclick=function(){
 
-let data = JSON.stringify(coloredGrids);
+let data=JSON.stringify(coloredGrids);
 
-let blob = new Blob([data], {type:"application/json"});
+let blob=new Blob([data],{type:"application/json"});
 
-let url = URL.createObjectURL(blob);
+let url=URL.createObjectURL(blob);
 
-let a = document.createElement("a");
-
-a.href = url;
-
-a.download = "gridmap_data.json";
-
-a.click();
+window.open(url);
 
 };
 
-// 読み込み
-document.getElementById("loadData").onclick = function(){
+document.getElementById("loadData").onclick=function(){
 
 document.getElementById("fileInput").click();
 
 };
 
-document.getElementById("fileInput").onchange = function(e){
+document.getElementById("fileInput").onchange=function(e){
 
-let file = e.target.files[0];
+let file=e.target.files[0];
 
-let reader = new FileReader();
+let reader=new FileReader();
 
-reader.onload = function(){
+reader.onload=function(){
 
-coloredGrids = JSON.parse(reader.result);
+coloredGrids=JSON.parse(reader.result);
 
-localStorage.setItem("grids", JSON.stringify(coloredGrids));
+localStorage.setItem(
+"grids",
+JSON.stringify(coloredGrids)
+);
 
-drawGrid();
+location.reload();
 
 };
 
 reader.readAsText(file);
 
 };
-  
+
 </script>
+
 </body>
 </html>
