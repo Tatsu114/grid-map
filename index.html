@@ -46,6 +46,10 @@ border-radius:8px;
 <div id="map"></div>
   <button id="paintToggle">🖌 塗りモード: ON</button>
 
+<button id="saveData">💾 保存</button>
+<button id="loadData">📂 読み込み</button>
+<input type="file" id="fileInput" style="display:none">
+
 <script>
 let paintMode = true;
 
@@ -168,10 +172,5 @@ reader.readAsText(file);
 };
   
 </script>
-
-<button id="saveData">💾 保存</button>
-<button id="loadData">📂 読み込み</button>
-<input type="file" id="fileInput" style="display:none">
-  
 </body>
 </html>
