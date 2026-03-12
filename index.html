@@ -19,6 +19,27 @@ padding:10px;
 border-radius:8px;
 font-size:14px;
 }
+
+#saveData{
+position:absolute;
+bottom:20px;
+left:10px;
+z-index:1000;
+background:white;
+padding:10px;
+border-radius:8px;
+}
+
+#loadData{
+position:absolute;
+bottom:20px;
+left:90px;
+z-index:1000;
+background:white;
+padding:10px;
+border-radius:8px;
+}
+  
 </style>
 </head>
 <body>
@@ -99,7 +120,58 @@ drawGrid();
 
 map.on("moveend", drawGrid);
 drawGrid();
+
+// 保存
+document.getElementById("saveData").onclick = function(){
+
+let data = JSON.stringify(coloredGrids);
+
+let blob = new Blob([data], {type:"application/json"});
+
+let url = URL.createObjectURL(blob);
+
+let a = document.createElement("a");
+
+a.href = url;
+
+a.download = "gridmap_data.json";
+
+a.click();
+
+};
+
+// 読み込み
+document.getElementById("loadData").onclick = function(){
+
+document.getElementById("fileInput").click();
+
+};
+
+document.getElementById("fileInput").onchange = function(e){
+
+let file = e.target.files[0];
+
+let reader = new FileReader();
+
+reader.onload = function(){
+
+coloredGrids = JSON.parse(reader.result);
+
+localStorage.setItem("grids", JSON.stringify(coloredGrids));
+
+drawGrid();
+
+};
+
+reader.readAsText(file);
+
+};
+  
 </script>
 
+<button id="saveData">💾 保存</button>
+<button id="loadData">📂 読み込み</button>
+<input type="file" id="fileInput" style="display:none">
+  
 </body>
 </html>
